@@ -107,6 +107,29 @@ class UssdRepositoryCache
 
         return $text;
     }
+    public static function ViewProfile($msisdn, $userExists)
+    {
+        if ($userExists) {
+            $userProfile = self::getUserProfile($msisdn);
+
+            if ($userProfile) {
+                $text = "END Your Profile:\nName: {$userProfile['name']}\nEmail: {$userProfile['email']}\nPhone: {$userProfile['phone']}";
+            } else {
+                $text = "END User profile not found.";
+            }
+        } else {
+            $text = "END User not registered. Please register first.";
+        }
+
+        return $text;
+    }
+
+    public static function getUserProfile($msisdn)
+    {
+        $user = User::where('phone', $msisdn)->first();
+        return $user ? $user->toArray() : null;
+    }
+
 
     public static function Register($ussdSession, $ussdString)
     {

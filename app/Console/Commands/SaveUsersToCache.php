@@ -34,6 +34,7 @@ class SaveUsersToCache extends Command
         $user = User::create([
             'name'=>'Leence Lidonde',
             'phone' => '254745460260',
+            'location'=>'rrrr',
             'email' => 'user@example.com',
             'password' => bcrypt('password'),
         ]);

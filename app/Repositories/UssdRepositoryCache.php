@@ -113,7 +113,7 @@ class UssdRepositoryCache
             $userProfile = self::getUserProfile($msisdn);
 
             if ($userProfile) {
-                $text = "END Your Profile:\nName: {$userProfile['name']}\nEmail: {$userProfile['email']}\nPhone: {$userProfile['phone']}";
+                $text = "END Your Profile:\nName: {$userProfile['name']}\nEmail: {$userProfile['email']}\nPhone: {$userProfile['phone']}\nLocation: {$userProfile['location']}\n00. Home";
             } else {
                 $text = "END User profile not found.";
             }
@@ -195,66 +195,68 @@ class UssdRepositoryCache
     }
     public static function insertLocation($ussdSession, $ussdString, $userResponse)
 {
-    $userResponse = strtolower($userResponse);
+    $sessionID = $ussdSession['session_id'];
+    $name = Redis::get($sessionID . 'name');
+    $phoneNumber = Redis::get($sessionID . 'phone');
+    $email = Redis::get($sessionID . 'email');
+    $location = Redis::get($sessionID . 'location');
 
-    $name = Redis::get($ussdSession['session_id'] . 'name');
-    $phoneNumber= Redis::get($ussdSession['session_id'] . 'phone');
-    $email = Redis::get($ussdSession['session_id'] . 'email');
-    $location = Redis::get($ussdSession['session_id'] . 'location');
+    
+    // echo "Debug - Location: $location, UserResponse: $userResponse\n";
 
     if (empty($location)) {
-        // Set location if not already set
-        Redis::set($ussdSession['session_id'] . 'location', $ussdString);
+        Redis::set($sessionID . 'location', $ussdString);
 
-        // Confirmation message
         $text = "CON Confirm Details\n";
-        $text .= "Email: " . ($email ?? "N/A") . "\n";
-        $text .= "Phone:"  .($phone ?? "N/A")  ."\n";
-        $text .= "Name: " . ($name ?? "N/A") . "\n";
-        $text .= "Location: " . ($ussdString ?? "N/A") . "\n";
+        $text .= "Email: " . $email . "\n";
+        $text .= "Phone: " . $ussdSession['msisdn'] . "\n";
+        $text .= "Name: " . $name . "\n";
+        $text .= "Location: " . $ussdString . "\n";
         $text .= "1. Confirm\n";
-        $text .= "2. Quit";
+        $text .= "2. Cancel";
 
         // Update USSD session state
         $ussdSession['state'] = 'confirm_details';
-        Redis::set($ussdSession['msisdn'], json_encode($ussdSession));
+        Redis::set($sessionID, json_encode($ussdSession));
 
         return $text;
     }
-    // confirm or cancel
-    switch ($userResponse) {
-        case 'confirm':
-            // confirm user, store in the database
-            $userModel = new User([
-                'email' => $email,
-                'name' => $name,
-                'location' => $location,
-            ]);
 
-            $userModel->save();
+$userResponse = (string) $userResponse;
 
-            // Clear the cache  after saving
-            self::clearCache($ussdSession['msisdn'], $ussdSession);
+$userInput = $ussdString;
 
-            return "END Details saved successfully";
+if ($userResponse === '1' || $userInput === '1') {
+    $userModel = new User([
+        'email' => $email,
+        'name' => $name,
+        'phone' => $ussdSession['msisdn'],
+        'location' => $location,
+    ]);
 
-        case 'quit':
-            // User declined, clear the cache
-            self::clearCache($ussdSession['msisdn'], $ussdSession);
+    $userModel->save();
+    self::clearCache($ussdSession['msisdn'], $ussdSession);
 
-            return "END Details not saved. Session cleared";
+    return "END Details saved successfully";
+} elseif ($userResponse === '2' || $userInput === '2') {
+    // Clear the location from the cache
+    Redis::del($sessionID . 'location');
+    
+    $text = "CON Details not saved.\n00. Home" ;
 
-        default:
-            // Invalid response
-            $text = "CON Invalid option. Confirm Details\n";
-            $text .= "1. Confirm\n";
-            $text .= "2. Quit";
-            return $text;
-    }
+    // Update USSD session state
+    $ussdSession['state'] = 'main_menu';
+    Redis::set($sessionID, json_encode($ussdSession));
+
+    return $text;
+} else {
+    $text = "CON Invalid option. Confirm Details\n";
+    $text .= "1. Confirm\n";
+    $text .= "2. Cancel";
+    return $text;
 }
 
-
-    
+}
     public static function contactUs($ussdSession)
     {
         return "END Contact Us via:\nEmail:info@bitwise.co.ke \nPhone:0100000000 \n00 .Home";
@@ -303,8 +305,6 @@ class UssdRepositoryCache
     {
         self::clearCache($ussdSession['msisdn'], $ussdSession);
         return "END Thank you for using Bitwise";
-    }
-
-    
+    }   
     
 }

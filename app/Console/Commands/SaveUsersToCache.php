@@ -36,7 +36,6 @@ class SaveUsersToCache extends Command
             'phone' => '254745460260',
             'location'=>'rrrr',
             'email' => 'user@example.com',
-            'password' => bcrypt('password'),
         ]);
         Redis::set('users',json_encode($users));
     }

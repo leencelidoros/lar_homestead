@@ -8,16 +8,51 @@ use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Http\Resources\V1\InvoiceResource;
 use App\Http\Resources\V1\InvoiceCollection;
+use App\Filters\V1\InvoiceFilter;
+use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        return new InvoiceCollection(Invoice::paginate());
+    // public function index(Request $request)
+    // {
+    //     $filter = new InvoiceFilter();
+    //     $queryItems = $filter ->transform($request);//['column','operator','value']
+
+    //     if(count($queryItems)==0){
+    //     return new InvoiceCollection(Invoice::paginate());
+    //     }
+    //     else{
+    //         $invoices=Invoice::where($queryItems)->paginate();
+         
+    //         return new InvoiceCollection($invoices->appends($request->query()));
+    //     }
+
+    //     // Invoice::where($queryItems);
+
+    // }
+    public function index(Request $request)
+{
+    $filter = new InvoiceFilter();
+    $queryItems = $filter->transform($request);
+
+    $invoicesQuery = Invoice::query();
+
+    if (count($queryItems) > 0) {
+        $invoicesQuery->where($queryItems);
     }
+
+    $invoices = $invoicesQuery->paginate();
+
+    // Append both query parameters and filter parameters to pagination links
+    $appendedData = array_merge($request->query(), $queryItems);
+    $invoices->appends($appendedData);
+
+    return new InvoiceCollection($invoices);
+}
+
 
     /**
      * Show the form for creating a new resource.

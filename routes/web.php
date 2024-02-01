@@ -17,10 +17,12 @@ use App\Models\User;
 */
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('auth.login');
+})->name('login');
 
 Auth::routes();
+// Route::post('/login', [LoginController::class, 'login']);
+
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 

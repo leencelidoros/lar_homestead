@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->integer('amount');
-            $table->integer('customer_id');
+            $table->foreignId('customer_id')->constrained()->onDelete('cascade');
             $table->string('status');//Billed ,void,paid
             $table->dateTime('billed_date');
             $table->dateTime('paid_date')->nullable();

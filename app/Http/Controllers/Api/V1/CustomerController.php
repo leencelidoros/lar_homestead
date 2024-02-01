@@ -17,34 +17,48 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      */
-       public function index(Request $request)
-    {
-        $filter = new CustomerFilter();
-        $queryItems = $filter->transform($request);
-    
-        $customersQuery = Customer::query();
-    
-        if (count($queryItems) > 0) {
-            $customersQuery->where($queryItems);
-        }
-    
-        $customers = $customersQuery->paginate();
-    
-        // Append both query parameters and filter parameters to pagination links
-        $appendedData = array_merge($request->query(), $queryItems);
-        $customers->appends($appendedData);
-    
-        return new CustomerCollection($customers);
-    }
-  
+    //     public function index(Request $request)
+    // {
+    //     $filter = new CustomerFilter();
+    //     $filterItems = $filter->transform($request);
+
+    //     $customersQuery = Customer::query();
+    //     $includeInvoices = boolval($request->query('includeInvoices')); 
+
+    //     if (count($filterItems) > 0) {
+    //         $customersQuery->where($filterItems);
+    //     }
+
+    //     if ($includeInvoices) {
+    //         $customersQuery->with(['invoices' => function ($query) {
+    //             $query->latest();
+    //         }]);
+    //     }
+
+    //     $customers = $customersQuery->paginate();
+
+    //     $appendedData = array_merge($request->query(), $filterItems);
+    //     $customers->appends($appendedData);
+
+    //     return new CustomerCollection($customers);
+    // }
+      public function index (Request $request)
+      {
+        return Customer::filter($request)->with('invoices')->get();
+      }
+
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
+
     {
-        //
-    }
+    //   Customer::create([
+    //     'name'=>$request['name'],
+
+    //   ])   
+     }
 
     /**
      * Store a newly created resource in storage.
@@ -59,8 +73,15 @@ class CustomerController extends Controller
      */
     public function show(Customer $customer)
     {
-        return new CustomerResource($customer );  
+        $includeInvoices = request()->query('includeInvoices');
+
+        if ($includeInvoices) {
+            return new CustomerResource($customer->load('invoices'));
+        }
+
+        return new CustomerResource($customer);
     }
+
 
     /**
      * Show the form for editing the specified resource.

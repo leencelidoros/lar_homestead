@@ -3,6 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UssdController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Api\V1\CustomerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,9 +21,23 @@ use App\Http\Controllers\UssdController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/register', [RegisterController::class, 'register']);
+
 Route::post('/ussd', [App\Http\Controllers\UssdController::class, 'ussd']);
 //api//v1/
-Route::group(['prefix'=>'v1','namespace'=>'App\Http\Controllers\Api\V1'],function(){
-    Route::apiResource('customers',CustomerController::class);
-    Route::apiResource('invoices',InvoiceController::class);
-}); 
+// Route::group(['prefix'=>'v1','namespace'=>'App\Http\Controllers\Api\V1'],function(){
+//     Route::get('customers',CustomerController::class);
+//     Route::apiResource('invoices',InvoiceController::class);
+// }); 
+Route::group([
+    'prefix' => 'v1', 'middleware'=>'auth:sanctum'
+],function(){
+    Route::post('/logout', [LoginController::class, 'logout']);
+    Route::controller(CustomerController::class)->group(function () {
+    Route::get('customers','index');
+    
+    // Route::get('invoices','index');
+});
+});

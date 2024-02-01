@@ -30,4 +30,8 @@ return new class extends Migration
     {
         Schema::dropIfExists('personal_access_tokens');
     }
+    public function boot(): void
+    {
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+    }
 };

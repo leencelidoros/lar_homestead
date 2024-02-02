@@ -37,6 +37,12 @@ Route::group([
     Route::post('/logout', [LoginController::class, 'logout']);
     Route::controller(CustomerController::class)->group(function () {
     Route::get('customers','index');
+    Route::post('customers/create','create');
+    Route::post('customers/{customer}','show');
+    Route::post('customers/edit/{customer}','edit');
+    Route::post('customers/destroy/{customer}','destroy');
+    
+    
     
     // Route::get('invoices','index');
 });

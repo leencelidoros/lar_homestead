@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasUuid;
 
 class Invoice extends Model
 {
-    use HasFactory;
+    use HasFactory,HasUuid;
 
     public function Customer()
     {

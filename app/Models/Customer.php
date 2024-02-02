@@ -1,13 +1,16 @@
 <?php
 
 namespace App\Models;
-
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
-    use HasFactory;
+    protected $guarded = [
+        'id'
+    ];
+    use HasFactory,HasUuid;
 
     public function invoices()
     {
@@ -26,6 +29,10 @@ class Customer extends Model
             $query->where('state',request('state'));
         }
 
+    }
+    public function getRouteKeyName()
+    {
+        return 'uuid';
     }
 }
 

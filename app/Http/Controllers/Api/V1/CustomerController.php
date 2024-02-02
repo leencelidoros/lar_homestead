@@ -14,34 +14,7 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    //     public function index(Request $request)
-    // {
-    //     $filter = new CustomerFilter();
-    //     $filterItems = $filter->transform($request);
-
-    //     $customersQuery = Customer::query();
-    //     $includeInvoices = boolval($request->query('includeInvoices')); 
-
-    //     if (count($filterItems) > 0) {
-    //         $customersQuery->where($filterItems);
-    //     }
-
-    //     if ($includeInvoices) {
-    //         $customersQuery->with(['invoices' => function ($query) {
-    //             $query->latest();
-    //         }]);
-    //     }
-
-    //     $customers = $customersQuery->paginate();
-
-    //     $appendedData = array_merge($request->query(), $filterItems);
-    //     $customers->appends($appendedData);
-
-    //     return new CustomerCollection($customers);
-    // }
+    
       public function index (Request $request)
       {
         return Customer::filter($request)->with('invoices')->get();
@@ -51,14 +24,33 @@ class CustomerController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+
     public function create(Request $request)
-
     {
-    //   Customer::create([
-    //     'name'=>$request['name'],
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'email' => 'required|email|unique:customers,email',
+            'city' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'state' => 'required|string|max:255',
+            'postalcode' => 'required|string|max:20',
+        ]);
 
-    //   ])   
-     }
+        Customer::create([
+            'name' => $request->input('name'),
+            'type' => $request->input('type'),
+            'email' => $request->input('email'),
+            'city' => $request->input('city'),
+            'address' => $request->input('address'),
+            'state' => $request->input('state'),
+            'postalcode' => $request->input('postalcode'),
+        ]);
+        return response()->json([
+            'message'=>'customer Created Succesfully',
+            'status'=>true
+        ]);
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -71,25 +63,53 @@ class CustomerController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Customer $customer)
+        public function show(Request $request)
     {
-        $includeInvoices = request()->query('includeInvoices');
+        $filteredCustomers = Customer::filter($request)->with('invoices')->get();
 
-        if ($includeInvoices) {
-            return new CustomerResource($customer->load('invoices'));
-        }
-
-        return new CustomerResource($customer);
+        return $filteredCustomers;
     }
+
+    
 
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Customer $customer)
+    public function edit(Request $request,Customer $customer)
     {
-        //
+        
+        if (!$customer) {
+            return response()->json(['error' => 'Customer not found'], 404);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'email' => 'required|email|unique:customers,email,' ,
+            'city' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'state' => 'required|string|max:255',
+            'postalcode' => 'required|string|max:20',
+        ]);
+
+        $customer->update([
+            'name' => $request->input('name'),
+            'type' => $request->input('type'),
+            'email' => $request->input('email'),
+            'city' => $request->input('city'),
+            'address' => $request->input('address'),
+            'state' => $request->input('state'),
+            'postalcode' => $request->input('postalcode'),
+        ]);
+
+        
+         return response()->json([
+            'message'=>'customer Updated Succesfully',
+            'status'=>true
+        ]);
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -102,8 +122,17 @@ class CustomerController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Customer $customer)
+    
+    public function destroy($id)
     {
-        //
+        $customer = Customer::find($id);
+
+        if (!$customer) {
+            return response()->json(['error' => 'Customer not found'], 404);
+        }
+        $customer->delete();
+
+        return response()->json(['message' => 'Customer deleted successfully']);
     }
+
 }
